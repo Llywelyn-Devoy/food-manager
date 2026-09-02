@@ -1,0 +1,15 @@
+services:
+  app:
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"     # bind OS port 80 to container port 80
+    volumes:
+      - ./app_data:/app_data
+    # environment:
+      # pass
+    # depends_on:
+      # pass
