@@ -1,4 +1,5 @@
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 # from fastapi.middleware.cors import CORSMiddleware
@@ -18,9 +19,7 @@ async def lifespan(app: FastAPI):
         app.state.engine = engine
 
         # SEE: <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#using-a-sessionmaker>
-        AsyncSession = async_sessionmaker(engine)
-        app.state.make_session = lambda: AsyncSession()
-        app.state.make_session_transaction = lambda: AsyncSession.begin()
+        # AsyncSession = async_sessionmaker(engine)
 
         yield
 

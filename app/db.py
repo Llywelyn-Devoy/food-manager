@@ -3,7 +3,7 @@ from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 from sqlalchemy import MetaData, func
 from sqlalchemy import select
 import app.settings as settings
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from sqlalchemy import Column, Integer, String, ForeignKey, Table
 from datetime import datetime
