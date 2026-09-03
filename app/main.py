@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 # from fastapi.middleware.cors import CORSMiddleware
@@ -6,15 +7,23 @@ from fastapi.middleware.gzip import GZipMiddleware
 from app.api.main import router as api_router
 # from app.core.config import settings
 import app.settings as settings
-from app.db import init_engine, init_database
+from app.db import create_engine, init_database
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with init_engine(settings.SQLITE_DATABASE_URL) as engine:
+    async with create_engine(settings.SQLITE_DATABASE_URL) as engine:
         print("Starting...")
+
         await init_database(engine)
         app.state.engine = engine
+
+        # SEE: <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#using-a-sessionmaker>
+        AsyncSession = async_sessionmaker(engine)
+        app.state.make_session = lambda: AsyncSession()
+        app.state.make_session_transaction = lambda: AsyncSession.begin()
+
         yield
+
         print("Shutting down...")
 
 
