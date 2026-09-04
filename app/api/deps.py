@@ -14,7 +14,16 @@ async def make_session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     See: <https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>
     See: <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#framing-out-a-begin-commit-rollback-block>
     """
-    async with AsyncSession(engine) as session:
+    async with AsyncSession(
+        engine,
+        # See: <https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session.params.expire_on_commit>
+        # Disabling this prevents re-fetching the object from the DB after
+        # commit.
+        # NOTE: This change appears to prevent a crash after committing, I am
+        # not sure of the exact cause but I think the combination of the ORM
+        # re-fetching the object from the DB + the async context is to blame.
+        expire_on_commit=False,
+    ) as session:
         yield session
 
 
@@ -26,27 +35,4 @@ async def session_dep(request: Request) -> AsyncGenerator[AsyncSession]:
         yield session
 
 
-@asynccontextmanager
-async def make_session_transact(engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
-    """
-    Creates a new AsyncSession context manager. Transaction is explicitly begun and commited on context exit.
-
-    See: <https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession.begin>
-    See: <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#framing-out-a-begin-commit-rollback-block>
-    """
-    async with AsyncSession(engine) as session, session.begin():
-        yield session
-
-
 AsyncSessionDep = Annotated[AsyncSession, Depends(session_dep)]
-
-
-# NOTE: we don't apply the context manager decorator because fastapi manages this for us
-# because this is used as a dependency
-# @asynccontextmanager
-async def session_transact_dep(request: Request) -> AsyncGenerator[AsyncSession]:
-    async with make_session_transact(request.app.state.engine) as session:
-        yield session
-
-
-AsyncSessionTransactDep = Annotated[AsyncSession, Depends(session_transact_dep)]

@@ -1,23 +1,12 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from datetime import datetime
 
-from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
     pass
-
-
-class ShopItem(Base):
-    __tablename__ = "shop_item"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    quantity: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(default=func.now())
 
 
 @asynccontextmanager
@@ -33,5 +22,6 @@ async def create_engine(url: str) -> AsyncGenerator[AsyncEngine]:
 async def init_database(engine: AsyncEngine):
     # SEE: <https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html>
     async with engine.begin() as conn:
-        # NOTE: we choose not to destroy any tables we don't use
+        # NOTE: we choose not to drop any tables we don't use and only create
+        # tables if absent
         await conn.run_sync(Base.metadata.create_all)

@@ -4,11 +4,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import AsyncSessionDep
-from app.db import ShopItem
 from app.repositories.shop_item import ShopItemRepo
+from app.schema import ShopItem
 
 router = APIRouter(prefix="/items")
 
@@ -29,6 +29,8 @@ class ShopItemDTO:
 
     @staticmethod
     def from_shop_item(si: ShopItem) -> "ShopItemDTO":
+        #                               ^^^^^^^^^^^^^
+        #                               Forward reference See: <https://stackoverflow.com/a/40371102>
         return ShopItemDTO(
             id=si.id,
             name=si.name,
@@ -40,3 +42,14 @@ class ShopItemDTO:
 @router.get("/")
 async def get_shop_items(repo: ShopItemRepoDep) -> Iterable[ShopItemDTO]:
     return map(ShopItemDTO.from_shop_item, await repo.get_all_shop_items())
+
+
+@router.post("/create")
+async def create_shop_items(
+    repo: ShopItemRepoDep,
+    # TODO: create pydantic model for these fields
+    name: Annotated[str, Query(min_length=1, max_length=30)],
+    quantity: Annotated[int, Query(ge=1)],
+) -> ShopItemDTO:
+    return ShopItemDTO.from_shop_item(await repo.create_shop_item(name, quantity))
+    # raise HTTPException(status_code=204, detail="No content")
