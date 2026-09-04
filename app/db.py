@@ -1,15 +1,15 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
-from sqlalchemy import MetaData, func
-from sqlalchemy import select
-import app.settings as settings
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
-from sqlalchemy import Column, Integer, String, ForeignKey, Table
 from datetime import datetime
+
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
 
 class Base(DeclarativeBase):
     pass
+
 
 class ShopItem(Base):
     __tablename__ = "shop_item"
@@ -19,6 +19,7 @@ class ShopItem(Base):
     quantity: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
+
 @asynccontextmanager
 async def create_engine(url: str) -> AsyncGenerator[AsyncEngine]:
     # SEE: <https://stackoverflow.com/a/79990188>
@@ -27,6 +28,7 @@ async def create_engine(url: str) -> AsyncGenerator[AsyncEngine]:
         yield engine
     finally:
         await engine.dispose()
+
 
 async def init_database(engine: AsyncEngine):
     # SEE: <https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html>

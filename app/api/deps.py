@@ -1,7 +1,9 @@
-from fastapi import Request, Depends
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-from typing import AsyncGenerator, Annotated
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Annotated
+
+from fastapi import Depends, Request
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 
 @asynccontextmanager
@@ -15,12 +17,14 @@ async def make_session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     async with AsyncSession(engine) as session:
         yield session
 
+
 # NOTE: we don't apply the context manager decorator because fastapi manages this for us
 # because this is used as a dependency
 # @asynccontextmanager
 async def session_dep(request: Request) -> AsyncGenerator[AsyncSession]:
     async with make_session(request.app.state.engine) as session:
         yield session
+
 
 @asynccontextmanager
 async def make_session_transact(engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
@@ -33,7 +37,9 @@ async def make_session_transact(engine: AsyncEngine) -> AsyncGenerator[AsyncSess
     async with AsyncSession(engine) as session, session.begin():
         yield session
 
+
 AsyncSessionDep = Annotated[AsyncSession, Depends(session_dep)]
+
 
 # NOTE: we don't apply the context manager decorator because fastapi manages this for us
 # because this is used as a dependency
@@ -41,5 +47,6 @@ AsyncSessionDep = Annotated[AsyncSession, Depends(session_dep)]
 async def session_transact_dep(request: Request) -> AsyncGenerator[AsyncSession]:
     async with make_session_transact(request.app.state.engine) as session:
         yield session
+
 
 AsyncSessionTransactDep = Annotated[AsyncSession, Depends(session_transact_dep)]

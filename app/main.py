@@ -1,14 +1,15 @@
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
 # from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from app.api.main import router as api_router
 # from app.core.config import settings
-import app.settings as settings
+from app import settings
+from app.api.main import router as api_router
 from app.db import create_engine, init_database
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
