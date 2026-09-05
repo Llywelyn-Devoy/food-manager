@@ -16,11 +16,11 @@ FROM base AS food-manager-debug
 RUN pip install --no-cache-dir --upgrade debugpy
 
 # TODO: mount the code so we can have hot reloading????
-COPY . .
+VOLUME ./app
 
 CMD [                                                                                 \
     "python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", \
-    "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"                    \
+    "uvicorn", "--reload", "app.main:app", "--host", "0.0.0.0", "--port", "80"                    \
 ]
 
 ##########
