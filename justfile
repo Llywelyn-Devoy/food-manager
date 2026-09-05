@@ -17,7 +17,7 @@ help:
     @Write-Output "crun: Run the container without a debugger";
 
 cdebug:
-    docker compose up --build --target debugger
+    docker compose up --build debug-app
 
 crun:
-    docker compose up --build --target primary
+    docker compose up --build prod-app
