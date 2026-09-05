@@ -1,14 +1,30 @@
 services:
-  app:
+  base:
     extra_hosts:
       - host.docker.internal:host-gateway
     build:
       context: .
       dockerfile: Dockerfile
+
+  debug-app:
+    build:
+      context: .
+      target: food-manager-debug
     ports:
-      - "80:80"     # bind OS port 80 to container port 80
+      - "80:80"
+      - "5678:5678"
     volumes:
       - ./app_data:/app_data
+
+  prod-app:
+    build:
+      context: .
+      target: food-manager-prod
+    ports:
+      - "80:80"
+    volumes:
+      - ./app_data:/app_data
+
     # environment:
       # pass
     # depends_on:
