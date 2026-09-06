@@ -7,6 +7,8 @@ COPY ./pyproject.toml .
 
 RUN pip install --no-cache-dir --upgrade .
 
+VOLUME [ "/app_data" ]
+
 
 ##########
 # Debug
@@ -16,10 +18,10 @@ FROM base AS food-manager-debug
 RUN pip install --no-cache-dir --upgrade debugpy
 
 # TODO: mount the code so we can have hot reloading????
-VOLUME ./app
+VOLUME [ "./app" ]
 
 CMD [                                                                                 \
-    "python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", \
+    "python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", \
     "uvicorn", "--reload", "app.main:app", "--host", "0.0.0.0", "--port", "80"                    \
 ]
 
