@@ -1,11 +1,12 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncEngine, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 
-class Base(DeclarativeBase):
+# Why `AsyncAttrs`? See: <https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#preventing-implicit-io-when-using-asyncsession>
+class Base(AsyncAttrs, DeclarativeBase):
     pass
 
 

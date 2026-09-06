@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import uvicorn
 from fastapi import FastAPI
 
 # from fastapi.middleware.cors import CORSMiddleware
@@ -53,3 +54,7 @@ app.include_router(api_router)
 @app.get("/")
 def hello_world():
     return "hello world"
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=80)

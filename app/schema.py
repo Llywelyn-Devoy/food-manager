@@ -1,17 +1,26 @@
 from datetime import datetime
 
 from sqlalchemy import Column, ForeignKey, Table, func
+from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
 
 # TODO: change name of this table
-association_table = Table(
-    "association_table",
-    Base.metadata,
-    Column("shop_item_id", ForeignKey("shop_item.id"), primary_key=True),
-    Column("shop_list_id", ForeignKey("shop_list.id"), primary_key=True),
-)
+
+
+class ShopItemInstance(Base):
+    __tablename__ = "shop_item_instance"
+
+    shop_item_id: Mapped[int] = mapped_column(
+        ForeignKey("shop_item.id"), primary_key=True
+    )
+    shop_list_id: Mapped[int] = mapped_column(
+        ForeignKey("shop_list.id"), primary_key=True
+    )
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    # item: Mapped["ShopItem"] = relationship(lazy="joined")
 
 
 class ShopItem(Base):
@@ -22,8 +31,8 @@ class ShopItem(Base):
     quantity: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    shop_lists: Mapped[list["ShopList"]] = relationship(
-        secondary=association_table, back_populates="shop_items"
+    lists: Mapped[list["ShopList"]] = relationship(
+        secondary="shop_item_instance", back_populates="items"
     )
 
 
@@ -35,6 +44,10 @@ class ShopList(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     active: Mapped[bool] = mapped_column(default=True)
 
-    shop_items: Mapped[list[ShopItem]] = relationship(
-        secondary=association_table, back_populates="shop_lists"
+    # item_instances: Mapped[list[ShopItemInstance]] = relationship(
+    #     cascade="all, delete-orphan", backref="shop_list"
+    # )
+
+    items: Mapped[list[ShopItem]] = relationship(
+        secondary="shop_item_instance", back_populates="lists"
     )
