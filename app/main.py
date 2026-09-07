@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 
 # from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -29,6 +29,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
+
+from app.repositories.exceptions import ObjectNotFound
+
+
+@app.exception_handler(ObjectNotFound)
+async def object_not_found__exception_handler(request: Request, exc: ObjectNotFound):
+    raise HTTPException(status_code=404)
+
 
 # TODO: add these origins to the app settings
 # NOTE: I'm not sure why the below origins aren't working so for how we'll just

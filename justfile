@@ -21,3 +21,9 @@ cdebug:
 
 crun:
     docker compose up --build prod-app
+
+activate-venv:
+    @.\.venv\Scripts\activate.ps1
+
+openapi: activate-venv
+    @python .\gen_openapi.py

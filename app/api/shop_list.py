@@ -4,9 +4,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import AsyncSessionDep
+from app.api.shop_item import (
+    ShopItemDTO,  # TODO: store DTO's in their own file? I don't like this import.
+)
+from app.repositories.exceptions import ObjectNotFound
 from app.repositories.shop_list import ShopListRepo
 from app.schema import ShopList
 
@@ -51,10 +55,27 @@ async def create_shop_list(
     return ShopListDTO.from_shop_list(await repo.create_shop_list(name))
 
 
-@router.post("/{list_id}/add-item")
+# NOTE: make this a put since subsequent puts are a no-op
+@router.put("/{list_id}/add-item")
 async def add_item(
     repo: ShopListRepoDep,
     list_id: int,
     item_id: int,
 ):
-    return await repo.add_item(list_id, item_id)
+    await repo.add_item(list_id, item_id)
+
+
+@router.get("/{list_id}/items")
+async def get_items(
+    repo: ShopListRepoDep,
+    list_id: int,
+) -> Iterable[ShopItemDTO]:
+    return map(ShopItemDTO.from_shop_item, await repo.get_items(list_id))
+
+
+@router.put("/{list_id}/deactivate")
+async def list_deactivate(
+    repo: ShopListRepoDep,
+    list_id: int,
+):
+    await repo.deactivate(list_id)
