@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen-openapi-types": "openapi-typescript openapi.json -o ./src/openapi_types.ts"
   },
   "dependencies": {
     "openapi-fetch": "^0.17.0",

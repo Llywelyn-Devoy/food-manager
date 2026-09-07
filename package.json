@@ -8,6 +8,7 @@
     "dev": "npm run -w frontend dev",
     "build": "npm run -w frontend build",
     "lint": "npm run -w frontend link",
-    "preview": "npm run -w frontend preview"
+    "preview": "npm run -w frontend preview",
+    "gen-openapi-types": "npm run -w frontend gen-openapi-types"
   }
 }

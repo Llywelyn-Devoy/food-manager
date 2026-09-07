@@ -1,3 +1,6 @@
+import json
+
 from app.main import app
 
-print(app.openapi())
+schema = app.openapi()
+print(json.dumps(schema))

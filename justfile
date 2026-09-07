@@ -13,17 +13,20 @@ set shell := ["powershell", "-c"]
 set windows-shell := ["powershell.exe", "-NoProfile", "-NonInteractive", "-NoLogo", "-Command"]
 
 help:
-    @Write-Output "cdebug: Run the container with a debugger";
-    @Write-Output "crun: Run the container without a debugger";
+    @just -l
 
+# Run the container with a debugger
 cdebug:
     docker compose up --build debug-app
 
+# Run the container without a debugger
 crun:
     docker compose up --build prod-app
 
-activate-venv:
-    @.\.venv\Scripts\activate.ps1
+# Generate openapi.json file from the FastAPI project
+gen-openapi:
+    @python ./backend/gen_openapi.py
 
-openapi: activate-venv
-    @python .\backend\gen_openapi.py
+# Generate typescript types from the openapi.json file
+gen-openapi-types: gen-openapi
+    npm run gen-openapi-types
