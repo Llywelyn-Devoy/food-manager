@@ -1,11 +1,10 @@
 from collections.abc import Iterable
 
 import sqlalchemy.exc as sqlalchemy_exceptions
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.repositories.exceptions import ObjectNotFound
 from app.schema import ShopItem, ShopList
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class ShopListRepo:

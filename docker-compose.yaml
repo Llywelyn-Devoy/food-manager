@@ -3,28 +3,28 @@ services:
     extra_hosts:
       - host.docker.internal:host-gateway
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
 
   debug-app:
     build:
-      context: .
+      context: ./backend
       target: food-manager-debug
     ports:
       - "80:80"
       - "5678:5678"
     volumes:
-      - ./app_data:/app_data
-      - ./app:/code/app
+      - ./backend/app_data:/app_data
+      - ./backend/app:/code/app
 
   prod-app:
     build:
-      context: .
+      context: ./backend
       target: food-manager-prod
     ports:
       - "80:80"
     volumes:
-      - ./app_data:/app_data
+      - ./backend/app_data:/app_data
 
     # environment:
       # pass

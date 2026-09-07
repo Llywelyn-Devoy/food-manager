@@ -26,4 +26,4 @@ activate-venv:
     @.\.venv\Scripts\activate.ps1
 
 openapi: activate-venv
-    @python .\gen_openapi.py
+    @python .\backend\gen_openapi.py
