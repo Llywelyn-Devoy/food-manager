@@ -7,6 +7,6 @@
   "compilerOptions": {
     "module":  "nodenext",
     "moduleResolution": "nodenext",
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
   }
 }
