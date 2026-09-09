@@ -3,6 +3,12 @@
   --radius: 2px;
 }
 
+.inline-list {
+    display: inline;
+    list-style: none;
+    padding-left: 0;
+}
+
 .list {
   list-style: none;
 }

@@ -25,8 +25,8 @@ export function formatDateNicely(date: Date): string {
 
 
 // NOTE: chucking this in here for now
-function getLang() {
-  if (navigator.languages !== undefined)
-    return navigator.languages[0];
-  return navigator.language;
-}
+// function getLang() {
+//   if (navigator.languages !== undefined)
+//     return navigator.languages[0];
+//   return navigator.language;
+// }
