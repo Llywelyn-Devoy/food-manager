@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-
 from app.api.deps import AsyncSessionDep
 from app.api.shop_item import (
     ShopItemDTO,  # TODO: store DTO's in their own file? I don't like this import.
@@ -13,6 +11,7 @@ from app.api.shop_item import (
 from app.repositories.exceptions import ObjectNotFound
 from app.repositories.shop_list import ShopListRepo
 from app.schema import ShopList
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 router = APIRouter(prefix="/lists")
 

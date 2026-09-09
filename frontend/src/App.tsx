@@ -1,121 +1,77 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+// import { useState } from "react";
+import Accordion from '@mui/material/Accordion'
+import AccordionDetails from '@mui/material/AccordionDetails'
+import AccordionSummary from '@mui/material/AccordionSummary'
+// import { useEffect, useState } from "react";
+import { formatDateNicely, parseDate } from "./date_utils";
+import type { components } from "./openapi_types";
+import { $api } from "./api";
+import Loading from './Loading';
+import { useEffect, useState } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0)
+
+type ShopListDTO = components["schemas"]["ShopListDTO"];
+// type ShopItemDTO = components["schemas"]["ShopItemDTO"];
+
+function ShopList(props) {
+  console.log("hit");
+
+  let list: ShopListDTO = props.list;
+  const { data, error, isLoading } = $api.useQuery(
+    "get",
+    "/lists/{list_id}/items",
+    {
+      params: {
+        path: { list_id: list.id }
+      }
+    }
+  )
+
+  if (error) {
+    console.error(error)
+    return null;
+  }
+
+  const isLoaded = !isLoading && !!data;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="list-item">
+      {/*TODO: move style into css file*/}
+      <Accordion>
+        <AccordionSummary>
+          <div style={{display: 'inline'}}>
+            <h3>{list.name}</h3>
+            <span>created: {formatDateNicely(parseDate(list.created_at))}</span>
+          </div>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Loading isLoaded={isLoaded}>
+            <ol> {isLoaded && data.map(i => <li>{i.name}</li>)} </ol>
+          </Loading>
+        </AccordionDetails>
+      </Accordion>
+    </div>
+  )
+}
 
-      <div className="ticks"></div>
+function App() {
+  const { data, error, isLoading } = $api.useQuery(
+    "get",
+    "/lists/"
+  )
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  if (error) {
+    console.error(error); return;
+  }
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+  const isLoaded = !isLoading && !!data;
+
+  return (
+      <Loading isLoaded={isLoaded} showForAtleast={1000}>
+        <ul className="list">
+           {isLoaded && data.map(ls => { return <li><ShopList list={ls}/></li> })}
+        </ul>
+      </Loading>
   )
 }
 

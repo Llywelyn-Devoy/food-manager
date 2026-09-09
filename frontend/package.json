@@ -11,7 +11,11 @@
     "gen-openapi-types": "openapi-typescript openapi.json -o ./src/openapi_types.ts"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^9.4.0",
     "openapi-fetch": "^0.17.0",
+    "openapi-react-query": "^0.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

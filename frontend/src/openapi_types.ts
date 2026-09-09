@@ -176,6 +176,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Items */
+            items: components["schemas"]["ShopItemDTO"][];
         };
         /** ValidationError */
         ValidationError: {
