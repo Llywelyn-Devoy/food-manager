@@ -15,6 +15,12 @@ class ShopListRepo:
         result = await self._db.scalars(select(ShopList))
         return iter(result.all())
 
+    async def get_shop_list(self, id: int) -> ShopList:
+        try:
+            return await self._db.get_one(ShopList, id)
+        except sqlalchemy_exceptions.NoResultFound as e:
+            raise ObjectNotFound from e
+
     async def create_shop_list(self, name: str) -> ShopList:
         new_shop_list = ShopList(name=name)
         self._db.add(new_shop_list)

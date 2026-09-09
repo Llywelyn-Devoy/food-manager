@@ -41,8 +41,13 @@ class ShopListDTO:
 
 
 @router.get("/")
-async def get_shop_lists(repo: ShopListRepoDep) -> Iterable[ShopListDTO]:
+async def get_all_shop_lists(repo: ShopListRepoDep) -> Iterable[ShopListDTO]:
     return map(ShopListDTO.from_shop_list, await repo.get_all_shop_lists())
+
+
+@router.get("/{list_id}/")
+async def get_shop_list(repo: ShopListRepoDep, list_id: int) -> ShopListDTO:
+    return ShopListDTO.from_shop_list(await repo.get_shop_list(list_id))
 
 
 @router.post("/create")

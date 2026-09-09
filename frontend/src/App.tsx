@@ -1,92 +1,145 @@
 // import { useState } from "react";
-import Accordion from '@mui/material/Accordion'
-import AccordionDetails from '@mui/material/AccordionDetails'
-import AccordionSummary from '@mui/material/AccordionSummary'
 // import { useEffect, useState } from "react";
 import { formatDateNicely, parseDate } from "./date_utils";
-import type { components } from "./openapi_types";
 import { $api } from "./api";
+import type { ShopItemDTO, ShopListDTO } from "./api";
 import Loading from './Loading';
-import { Suspense } from 'react';
+// import { Suspense } from 'react';
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Link,
+  Outlet,
+  RouterProvider
+} from '@tanstack/react-router';
 
 
-type ShopListDTO = components["schemas"]["ShopListDTO"];
-type ShopItemDTO = components["schemas"]["ShopItemDTO"];
+const rootRoute = createRootRoute({
+  component: () => {
+    return (
+      <>
+        <Outlet/>
+      </>
+    )
+  },
+  notFoundComponent: () => <p>Not found</p>
+});
 
-function CreatedAt({ date }) {
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  loader: ({}) => $api.GET("/lists/").then(r => r.data),
+  pendingComponent: Loading,
+  component: () => {
+    return (
+      <>
+      <h1>Food Manager 🛒</h1>
+      <ShoppingLists/>
+    </>
+    )
+  }
+});
+
+const listRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'list/$listId',
+  // errorComponent: PostErrorComponent,
+  loader: async ({ params: { listId } }) => {
+    return {
+      list: await $api.GET("/lists/{list_id}/", {
+          params: {
+            path: { list_id: parseInt(listId) }
+          }
+        })
+        .then(r => r.data),
+      items: await $api.GET(
+        "/lists/{list_id}/items",
+        {
+          params: {
+            path: { list_id: parseInt(listId) }
+          }
+        }
+      ).then(r => r.data),
+    }
+  },
+  pendingComponent: Loading,
+  component: ShoppingItems,
+})
+
+function CreatedAt({ strDate }: {strDate: string}) {
   return (
     <span style={{ color: "offwhite", backgroundColor: "coral", padding: "2px 10px", borderRadius: "10px" }}>
-      created: {formatDateNicely(parseDate(date))}
+      created: {formatDateNicely(parseDate(strDate))}
     </span>
   )
 }
 
-function ShoppingItems(props) {
-  let list: ShopListDTO = props.list;
-  const items: ShopItemDTO[] = $api.useSuspenseQuery(
-    "get",
-    "/lists/{list_id}/items",
-    {
-      params: {
-        path: { list_id: list.id }
-      }
-    }
-  ).data;
+function ShoppingItems() {
+  const data  = listRoute.useLoaderData();
+  const list: ShopListDTO | undefined = data.list;
+  const items: ShopItemDTO[] | undefined = data.items;
+
+  // TODO: better error handling
+  if(!list || !items) return <p>ERROR!</p>
 
   return (
-    <ol>{
-      items.map(i =>
-        <li key={i.id}>{i.name}</li>
-      )
-    }</ol>
+    <>
+      <h1>{list.name}</h1>
+      <ol>{
+        items.map(i =>
+          <li key={i.id}>{i.name}</li>
+        )
+      }</ol>
+    </>
   )
 }
 
-function ShoppingListAccordion(props) {
-  let list: ShopListDTO = props.list;
-
+function ShoppingList({ list }: { list: ShopListDTO }) {
   return (
-    <div className="list-item">
-      {/*TODO: move style into css file*/}
-      <Accordion>
-        <AccordionSummary>
-          <span>
-            <h3>{list.name}</h3>
-            <ul className="inline-list">
-              <li><CreatedAt date={list.created_at} /></li>
-            </ul>
-          </span>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Suspense fallback={ <Loading/> }>
-            <ShoppingItems list={list}/>
-          </Suspense>
-        </AccordionDetails>
-      </Accordion>
-    </div>
+    <Link className="list-item" to="/list/$listId" params={{ listId: `${list.id}` }}>
+          <h2>{list.name}</h2>
+          <ul className="inline-list">
+            <li><CreatedAt strDate={list.created_at} /></li>
+          </ul>
+    </Link>
   )
 }
 
 function ShoppingLists() {
-  const { data } = $api.useSuspenseQuery(
-    "get",
-    "/lists/"
-  )
-
+  const lists: ShopListDTO[] = indexRoute.useLoaderData();
   return (
     <ul className="list">
-      {data.map(ls => {
-        return <li key={ls.id}><ShoppingListAccordion list={ls} /></li>
+      {lists.map(ls => {
+        return <li key={ls.id}><ShoppingList list={ls} /></li>
       })}
     </ul>
   )
 }
 
+const routeTree = rootRoute.addChildren([indexRoute, listRoute])
+
+// Set up a Router instance
+const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  // Since we're using React Query, we don't want loader calls to ever be stale
+  // This will ensure that the loader is always called when the route is preloaded or visited
+  defaultPreloadStaleTime: 0,
+  defaultStaleTime: 5000,
+  scrollRestoration: true,
+});
+
+// Register things for typesafety
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
+
 function App() {
   return (
-    <Suspense fallback={ <Loading/> }>
-      <ShoppingLists/>
-    </Suspense>
+    <RouterProvider router={router} />
   )
 }
 

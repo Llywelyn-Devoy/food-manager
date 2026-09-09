@@ -45,8 +45,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Shop Lists */
-        get: operations["get_shop_lists_lists__get"];
+        /** Get All Shop Lists */
+        get: operations["get_all_shop_lists_lists__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lists/{list_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Shop List */
+        get: operations["get_shop_list_lists__list_id___get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -176,8 +193,6 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
-            /** Items */
-            items: components["schemas"]["ShopItemDTO"][];
         };
         /** ValidationError */
         ValidationError: {
@@ -253,7 +268,7 @@ export interface operations {
             };
         };
     };
-    get_shop_lists_lists__get: {
+    get_all_shop_lists_lists__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -269,6 +284,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShopListDTO"][];
+                };
+            };
+        };
+    };
+    get_shop_list_lists__list_id___get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopListDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

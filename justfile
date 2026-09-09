@@ -25,7 +25,8 @@ crun:
 
 # Generate openapi.json file from the FastAPI project
 gen-openapi:
-    @python ./backend/gen_openapi.py
+    @python ./backend/gen_openapi.py \
+        | Out-File -FilePath ./frontend/openapi.json -Encoding ascii
 
 # Generate typescript types from the openapi.json file
 gen-openapi-types: gen-openapi
