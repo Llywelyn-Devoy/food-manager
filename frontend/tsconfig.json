@@ -8,5 +8,8 @@
     "module":  "nodenext",
     "moduleResolution": "nodenext",
     "noUncheckedIndexedAccess": true,
+
+    // required to have enums
+    "erasableSyntaxOnly": false,
   }
 }

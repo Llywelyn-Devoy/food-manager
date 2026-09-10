@@ -1,8 +1,70 @@
+import { HttpStatusCodes400 } from "./status_codes";
 import createClient from "openapi-fetch";
 import type { paths, components } from "./openapi_types";
+import { notFound } from "@tanstack/react-router";
 
 export const fetchClient = createClient<paths>({ baseUrl: "http://localhost/" });
 export const $api = fetchClient;
 
 export type ShopListDTO = components["schemas"]["ShopListDTO"];
 export type ShopItemDTO = components["schemas"]["ShopItemDTO"];
+
+$api.use({
+  // async onRequest({ request, options }) {
+  // },
+  async onResponse({ response }) {
+    const { status } = response;
+    if (status === HttpStatusCodes400.NOT_FOUND)
+      // ensure tanstack hears about the not found resource
+      throw notFound();
+    if(status === HttpStatusCodes400.UNPROCESSABLE_ENTITY)
+      throw notFound();
+    return response
+  },
+
+  // NOTE: onError only called when status code IS NOT 2xx, 4xx or 5xx. 4xx and 5xx
+  // are considered "successful reponses with bad status codes", see
+  // <https://openapi-ts.dev/openapi-fetch/middleware-auth#error-handling>
+  // async onError({ error }) {
+  //   // wrap errors thrown by fetch
+  //   // TODO: better handling here
+  //   // return new Error("Oops, fetch failed", { cause: error });
+  // },
+});
+
+
+// const dataUndefinedError = () => { throw new Error("openapi-fetch: data was undefined"); }
+
+// TODO: name it better?
+async function wrapper<T, E>(response: Promise<Partial<{ data: T | undefined, error: E }>>): Promise<T> {
+  const { data, error } = await response;
+  if (error) {
+    throw error;
+  }
+
+  if (data === undefined) {
+    throw new Error("openapi-fetch: data was undefined");
+  } else {
+    return data;
+  }
+}
+
+export async function fetchLists(): Promise<ShopListDTO[]> {
+  return await wrapper($api.GET("/lists/"));
+}
+
+export async function fetchList(listId: number): Promise<ShopListDTO> {
+   return await wrapper($api.GET("/lists/{list_id}/", {
+    params: {
+      path: { list_id: listId }
+    }
+  }));
+}
+
+export async function fetchItems(listId: number): Promise<ShopItemDTO[]> {
+  return await wrapper($api.GET("/lists/{list_id}/items", {
+    params: {
+      path: { list_id: listId }
+    }
+  }));
+}

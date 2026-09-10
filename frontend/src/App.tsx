@@ -1,9 +1,10 @@
 // import { useState } from "react";
 // import { useEffect, useState } from "react";
 import { formatDateNicely, parseDate } from "./date_utils";
-import { $api } from "./api";
-import type { ShopItemDTO, ShopListDTO } from "./api";
+import { fetchItems, fetchList, fetchLists } from "./api";
+import type { ShopListDTO } from "./api";
 import Loading from './Loading';
+import ErrorBanner from './ErrorBanner';
 // import { Suspense } from 'react';
 import {
   createRootRoute,
@@ -23,13 +24,14 @@ const rootRoute = createRootRoute({
       </>
     )
   },
-  notFoundComponent: () => <p>Not found</p>
+  notFoundComponent: () => <ErrorBanner title="Not found"/>
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  loader: ({}) => $api.GET("/lists/").then(r => r.data),
+  loader: () => fetchLists(),
+  errorComponent: () => <ErrorBanner title={"Failed to load shop lists."} />,
   pendingComponent: Loading,
   component: () => {
     return (
@@ -44,23 +46,13 @@ const indexRoute = createRoute({
 const listRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'list/$listId',
-  // errorComponent: PostErrorComponent,
+  // errorComponent: () => <ErrorBanner title={"Failed to load shopping list."} />,
+  notFoundComponent: () => <ErrorBanner title={"List not found."} />,
   loader: async ({ params: { listId } }) => {
+    let listIdNum: number = parseInt(listId);
     return {
-      list: await $api.GET("/lists/{list_id}/", {
-          params: {
-            path: { list_id: parseInt(listId) }
-          }
-        })
-        .then(r => r.data),
-      items: await $api.GET(
-        "/lists/{list_id}/items",
-        {
-          params: {
-            path: { list_id: parseInt(listId) }
-          }
-        }
-      ).then(r => r.data),
+      list: await fetchList(listIdNum),
+      items: await fetchItems(listIdNum)
     }
   },
   pendingComponent: Loading,
@@ -77,11 +69,7 @@ function CreatedAt({ strDate }: {strDate: string}) {
 
 function ShoppingItems() {
   const data  = listRoute.useLoaderData();
-  const list: ShopListDTO | undefined = data.list;
-  const items: ShopItemDTO[] | undefined = data.items;
-
-  // TODO: better error handling
-  if(!list || !items) return <p>ERROR!</p>
+  const { list, items } = data;
 
   return (
     <>

@@ -4,11 +4,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
-
 from app.api.deps import AsyncSessionDep
 from app.repositories.shop_item import ShopItemRepo
 from app.schema import ShopItem
+from fastapi import APIRouter, Depends, Query
 
 router = APIRouter(prefix="/items")
 

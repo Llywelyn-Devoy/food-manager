@@ -10,6 +10,7 @@ from app.api.shop_item import (
 )
 from app.repositories.exceptions import ObjectNotFound
 from app.repositories.shop_list import ShopListRepo
+from app.responses import RespNotFound
 from app.schema import ShopList
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -45,7 +46,7 @@ async def get_all_shop_lists(repo: ShopListRepoDep) -> Iterable[ShopListDTO]:
     return map(ShopListDTO.from_shop_list, await repo.get_all_shop_lists())
 
 
-@router.get("/{list_id}/")
+@router.get("/{list_id}/", responses={**RespNotFound})
 async def get_shop_list(repo: ShopListRepoDep, list_id: int) -> ShopListDTO:
     return ShopListDTO.from_shop_list(await repo.get_shop_list(list_id))
 
@@ -60,7 +61,7 @@ async def create_shop_list(
 
 
 # NOTE: make this a put since subsequent puts are a no-op
-@router.put("/{list_id}/add-item")
+@router.put("/{list_id}/add-item", responses={**RespNotFound})
 async def add_item(
     repo: ShopListRepoDep,
     list_id: int,
@@ -69,7 +70,7 @@ async def add_item(
     await repo.add_item(list_id, item_id)
 
 
-@router.get("/{list_id}/items")
+@router.get("/{list_id}/items", responses={**RespNotFound})
 async def get_items(
     repo: ShopListRepoDep,
     list_id: int,
@@ -77,7 +78,7 @@ async def get_items(
     return map(ShopItemDTO.from_shop_item, await repo.get_items(list_id))
 
 
-@router.put("/{list_id}/deactivate")
+@router.put("/{list_id}/deactivate", responses={**RespNotFound})
 async def list_deactivate(
     repo: ShopListRepoDep,
     list_id: int,

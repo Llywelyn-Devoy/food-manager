@@ -3,6 +3,15 @@
   --radius: 2px;
 }
 
+@font-face {
+  font-family: OpenSans;
+  src: url(./font/OpenSans-VariableFont_wdth\,wght.ttf);
+}
+
+* {
+    font-family: OpenSans;
+}
+
 .inline-list {
     display: inline;
     list-style: none;
