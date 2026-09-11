@@ -7,7 +7,7 @@ from typing import Annotated
 from app.api.deps import AsyncSessionDep
 from app.repositories.shop_item import ShopItemRepo
 from app.schema import ShopItem
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 router = APIRouter(prefix="/items")
 
@@ -43,12 +43,16 @@ async def get_shop_items(repo: ShopItemRepoDep) -> Iterable[ShopItemDTO]:
     return map(ShopItemDTO.from_shop_item, await repo.get_all_shop_items())
 
 
+@dataclass
+class CreateShopItemDTO:
+    name: Annotated[str, Query(min_length=1, max_length=30)]
+    quantity: Annotated[int, Query(ge=1)]
+
+
 @router.post("/create")
 async def create_shop_items(
-    repo: ShopItemRepoDep,
-    # TODO: create pydantic model for these fields
-    name: Annotated[str, Query(min_length=1, max_length=30)],
-    quantity: Annotated[int, Query(ge=1)],
+    repo: ShopItemRepoDep, item: CreateShopItemDTO
 ) -> ShopItemDTO:
-    return ShopItemDTO.from_shop_item(await repo.create_shop_item(name, quantity))
-    # raise HTTPException(status_code=204, detail="No content")
+    return ShopItemDTO.from_shop_item(
+        await repo.create_shop_item(item.name, item.quantity)
+    )

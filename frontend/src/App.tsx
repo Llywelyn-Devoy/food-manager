@@ -1,10 +1,9 @@
 // import { useState } from "react";
 // import { useEffect, useState } from "react";
 import { formatDateNicely, parseDate } from "./date_utils";
-import { fetchItems, fetchList, fetchLists } from "./api";
+import { fetchAllItems, fetchItems, fetchList, fetchLists } from "./api";
 import type { ShopListDTO } from "./api";
 import Loading from './Loading';
-import ErrorBanner from './ErrorBanner';
 // import { Suspense } from 'react';
 import {
   createRootRoute,
@@ -14,6 +13,8 @@ import {
   Outlet,
   RouterProvider
 } from '@tanstack/react-router';
+import { Alert } from "@mui/material";
+import AddItemInput from "./AddItemInput";
 
 
 const rootRoute = createRootRoute({
@@ -24,14 +25,14 @@ const rootRoute = createRootRoute({
       </>
     )
   },
-  notFoundComponent: () => <ErrorBanner title="Not found"/>
+  notFoundComponent: () => <Alert severity="info">Not Found</Alert>
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   loader: () => fetchLists(),
-  errorComponent: () => <ErrorBanner title={"Failed to load shop lists."} />,
+  errorComponent: () => <Alert severity="error">Failed to load shop lists.</Alert>,
   pendingComponent: Loading,
   component: () => {
     return (
@@ -46,13 +47,14 @@ const indexRoute = createRoute({
 const listRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'list/$listId',
-  // errorComponent: () => <ErrorBanner title={"Failed to load shopping list."} />,
-  notFoundComponent: () => <ErrorBanner title={"List not found."} />,
+  errorComponent: () => <Alert severity="error">Failed to load shopping list.</Alert>,
+  notFoundComponent: () => <Alert severity="info">List not found.</Alert>,
   loader: async ({ params: { listId } }) => {
     let listIdNum: number = parseInt(listId);
     return {
       list: await fetchList(listIdNum),
-      items: await fetchItems(listIdNum)
+      listItems: await fetchItems(listIdNum),
+      allItems: await fetchAllItems(),
     }
   },
   pendingComponent: Loading,
@@ -69,13 +71,14 @@ function CreatedAt({ strDate }: {strDate: string}) {
 
 function ShoppingItems() {
   const data  = listRoute.useLoaderData();
-  const { list, items } = data;
+  const { list, listItems, allItems } = data;
 
   return (
     <>
       <h1>{list.name}</h1>
+      <AddItemInput allItems={allItems}/>
       <ol>{
-        items.map(i =>
+        listItems.map(i =>
           <li key={i.id}>{i.name}</li>
         )
       }</ol>
@@ -96,12 +99,27 @@ function ShoppingList({ list }: { list: ShopListDTO }) {
 
 function ShoppingLists() {
   const lists: ShopListDTO[] = indexRoute.useLoaderData();
+
+  const active = lists.filter(l => l.active);
+  const inactive = lists.filter(l => !l.active);
+  const renderList = (lists: ShopListDTO[]) => {
+    return lists.map(ls => {
+      return <li key={ls.id}><ShoppingList list={ls} /></li>
+    })
+  };
+
   return (
-    <ul className="list">
-      {lists.map(ls => {
-        return <li key={ls.id}><ShoppingList list={ls} /></li>
-      })}
-    </ul>
+    <>
+      <ul className="list">
+        { renderList(active) }
+      </ul>
+      <details>
+        <summary>Old lists:</summary>
+        <ul className="list">
+          { renderList(inactive) }
+        </ul>
+      </details>
+    </>
   )
 }
 

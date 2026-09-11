@@ -26,15 +26,14 @@
 .list-item {
     display: block;
     margin-top: 5px;
-    /*padding: 3px;*/
+    padding: 10px;
+
     border: solid var(--border) 1px;
     border-radius: var(--radius);
-    /*text-decoration: none;*/
-    width: 100%;
+
     text-align: left;
     cursor: pointer;
     text-decoration: none;
-    padding: 10px;
 }
 
 .list-item > h2 {

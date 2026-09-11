@@ -161,6 +161,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** CreateShopItemDTO */
+        CreateShopItemDTO: {
+            /** Name */
+            name: string;
+            /** Quantity */
+            quantity: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -238,15 +245,16 @@ export interface operations {
     };
     create_shop_items_items_create_post: {
         parameters: {
-            query: {
-                name: string;
-                quantity: number;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateShopItemDTO"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

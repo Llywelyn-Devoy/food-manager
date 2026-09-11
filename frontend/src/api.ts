@@ -1,15 +1,23 @@
 import { HttpStatusCodes400 } from "./status_codes";
-import createClient from "openapi-fetch";
+import createClient, { type Middleware } from "openapi-fetch";
+import createFetchClient from "openapi-fetch";
+import createQueryClient from "openapi-react-query";
+
 import type { paths, components } from "./openapi_types";
 import { notFound } from "@tanstack/react-router";
 
-export const fetchClient = createClient<paths>({ baseUrl: "http://localhost/" });
-export const $api = fetchClient;
+const baseUrl = "http://localhost/";
+export const $apif = createClient<paths>({ baseUrl: baseUrl });
+
+// as per example: <https://openapi-ts.dev/openapi-react-query/#basic-usage>
+const fetchClient = createFetchClient<paths>({ baseUrl: baseUrl })
+export const $apiq = createQueryClient(fetchClient);
 
 export type ShopListDTO = components["schemas"]["ShopListDTO"];
 export type ShopItemDTO = components["schemas"]["ShopItemDTO"];
+export type CreateShopItemDTO = components["schemas"]["CreateShopItemDTO"];
 
-$api.use({
+const middleware: Middleware = {
   // async onRequest({ request, options }) {
   // },
   async onResponse({ response }) {
@@ -17,7 +25,7 @@ $api.use({
     if (status === HttpStatusCodes400.NOT_FOUND)
       // ensure tanstack hears about the not found resource
       throw notFound();
-    if(status === HttpStatusCodes400.UNPROCESSABLE_ENTITY)
+    if (status === HttpStatusCodes400.UNPROCESSABLE_ENTITY)
       throw notFound();
     return response
   },
@@ -30,7 +38,10 @@ $api.use({
   //   // TODO: better handling here
   //   // return new Error("Oops, fetch failed", { cause: error });
   // },
-});
+};
+
+$apif.use(middleware);
+fetchClient.use(middleware);
 
 
 // const dataUndefinedError = () => { throw new Error("openapi-fetch: data was undefined"); }
@@ -50,21 +61,29 @@ async function wrapper<T, E>(response: Promise<Partial<{ data: T | undefined, er
 }
 
 export async function fetchLists(): Promise<ShopListDTO[]> {
-  return await wrapper($api.GET("/lists/"));
+  return await wrapper($apif.GET("/lists/"));
 }
 
 export async function fetchList(listId: number): Promise<ShopListDTO> {
-   return await wrapper($api.GET("/lists/{list_id}/", {
+   return await wrapper($apif.GET("/lists/{list_id}/", {
     params: {
       path: { list_id: listId }
     }
   }));
 }
 
+export async function fetchAllItems(): Promise<ShopItemDTO[]> {
+  return await wrapper($apif.GET("/items/"));
+}
+
 export async function fetchItems(listId: number): Promise<ShopItemDTO[]> {
-  return await wrapper($api.GET("/lists/{list_id}/items", {
+  return await wrapper($apif.GET("/lists/{list_id}/items", {
     params: {
       path: { list_id: listId }
     }
   }));
+}
+
+export function usePostNewItem() {
+  return $apiq.useMutation("post", "/items/create");
 }
