@@ -4,53 +4,82 @@ import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import { $apiq, usePostNewItem, type ShopItemDTO } from './api';
 import type { AutocompleteInputChangeReason, FilterOptionsState } from '@mui/material';
 
-interface ShopItemInput {
-  inputValue?: string;
-  itemId?: number;
-  itemName: string;
+interface Item<T> {
+  // the value entered by the user
+  value: string;
+  // the value shown in the list
+  label: string;
+  // the underlying item
+  item?: T;
 }
 
-const filter = createFilterOptions<ShopItemInput>();
+export default function AddItemInput<T>(
+  {
+    items,
+    toLabel,
+    createNewCallback,
+    onAddCallback,
+  }: {
+    //
+    items: T[],
+    //
+    toLabel: (label: T) => string,
+    // this is called when an non existing item is added, this allows for the
+    // item to be officially created. Return null if unsuccessfull.
+    onCreateCallback: (value: string) => T | null,
+    // this is called whenever an item is selected
+    onAddCallback: (item: T) => void,
+}) {
+  const filter = createFilterOptions<Item<T>>({
+    trim: true,
+  });
 
-export default function AddItemInput({ allItems }: { allItems: ShopItemDTO[] }) {
-  const [options, setOptions] = useState<ShopItemInput[]>(
-    allItems.map(i => { return { itemId: i.id, itemName: i.name } })
+  const [options, setOptions] = useState<Item<T>[]>(
+    items.map(i => {
+      const label = toLabel(i);
+      return {
+        value: label,
+        label: label,
+        item: i,
+      };
+    })
   );
-  const [value, setValue] = useState<ShopItemInput | null>(null);
 
+  // the current value that has been selected by pressing enter key or selecting
+  // from the list
+  const [value, setValue] = useState<Item<T> | null>(null);
+
+  // The current value in the input box
   // NOTE: if we set the inital state to `undefined`, the `Autocomplete`
   // component would think it's uncontrolled by this component so we set it to
   // `''` so we control the component.
   const [inputValue, setInputValue] = useState<string | undefined>('');
-  const mutation = usePostNewItem();
 
-  const addItem = (item: ShopItemInput) => {
-    setOptions(opts => [...opts, {
-      itemId: item.itemId,
-      itemName: item.itemName,
-    }] )
+  const addItem = (item: Item<T>) => {
+    onAddCallback(item.item);
+    setOptions(opts => [...opts, item] )
   };
 
-  const createItem = (item: ShopItemInput) => {
-    mutation.mutate({
-      body: { name: item.itemName, quantity: 1 }
-    }, {
-      onSuccess: (newItem, _, __, ___) => {
-        addItem({itemId: newItem.id, itemName: newItem.name})
-      }
-    })
-  };
+  // const createItem = (item: Item<T>) => {
+  //   addItem({itemId: newItem.id, itemName: newItem.name})
+  // };
 
   const onChange = (
     _: React.SyntheticEvent<Element, Event>,
-    newValue: string | ShopItemInput | null,
+    enteredValue: string | Item<T> | null,
     // reason: AutocompleteInputChangeReason
   ) => {
-    if (typeof newValue === 'string') {
-      setValue({
-        itemName: newValue,
-      });
-    } else if (newValue && newValue.inputValue) {
+    /*
+     * When the user doesn't select an existing list item, nor opts to add this
+     * item
+     */
+    if (typeof enteredValue === 'string') {
+      // we do nothing
+    }
+    /*
+     * When the user selects to add the item
+     */
+    else if (enteredValue && enteredValue.value) {
       // Create a new value from the user input
       const newItem = {
         itemName: newValue.inputValue,
@@ -74,7 +103,7 @@ export default function AddItemInput({ allItems }: { allItems: ShopItemDTO[] }) 
       setInputValue(newInputValue);
     }
   }
-  const filterOptions = (options: ShopItemInput[], params: FilterOptionsState<ShopItemInput>) => {
+  const filterOptions = (options: Item[], params: FilterOptionsState<Item>) => {
     const filtered = filter(options, params);
 
     const inputValueTrimmed = params.inputValue.trim();
@@ -90,7 +119,7 @@ export default function AddItemInput({ allItems }: { allItems: ShopItemDTO[] }) 
     return filtered;
   }
 
-  const getOptionLabel = (option:  string | ShopItemInput) => {
+  const getOptionLabel = (option:  string | Item) => {
     // Value selected with enter, right from the input
     if (typeof option === 'string') {
       return option;
@@ -105,7 +134,7 @@ export default function AddItemInput({ allItems }: { allItems: ShopItemDTO[] }) 
 
   const renderOption = (
     props: React.HTMLAttributes<HTMLLIElement> & { key: React.Key; },
-    option: ShopItemInput
+    option: Item
   ) => {
     const { key, ...optionProps } = props;
     return (
