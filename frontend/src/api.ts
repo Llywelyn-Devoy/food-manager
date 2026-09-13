@@ -84,6 +84,18 @@ export async function fetchItems(listId: number): Promise<ShopItemDTO[]> {
   }));
 }
 
-export function usePostNewItem() {
-  return $apiq.useMutation("post", "/items/create");
+export function usePostNewItem(scope: string) {
+  return $apiq.useMutation("post", "/items/create", {
+      scope: {
+        id: scope,
+      }
+    });
+}
+
+export function useAddItemToList(scope: string) {
+  return $apiq.useMutation("put", "/lists/{list_id}/add-item", {
+    scope: {
+      id: scope,
+    }
+  });
 }

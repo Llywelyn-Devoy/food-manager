@@ -1,7 +1,7 @@
 // import { useState } from "react";
 // import { useEffect, useState } from "react";
 import { formatDateNicely, parseDate } from "./date_utils";
-import { fetchAllItems, fetchItems, fetchList, fetchLists } from "./api";
+import { fetchAllItems, fetchItems, fetchList, fetchLists, useAddItemToList, usePostNewItem } from "./api";
 import type { ShopListDTO } from "./api";
 import Loading from './Loading';
 // import { Suspense } from 'react';
@@ -13,8 +13,10 @@ import {
   Outlet,
   RouterProvider
 } from '@tanstack/react-router';
-import { Alert } from "@mui/material";
-import AddItemInput from "./AddItemInput";
+import { Alert, Button, Stack, TextField } from "@mui/material";
+// import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useId, useState } from "react";
 
 
 const rootRoute = createRootRoute({
@@ -71,25 +73,109 @@ function CreatedAt({ strDate }: {strDate: string}) {
 
 function ShoppingItems() {
   const data  = listRoute.useLoaderData();
-  const { list, listItems, allItems } = data;
+  const { list, listItems /* , allItems */ } = data;
+
+  const mutScope = useId();
+  const newItemMutation = usePostNewItem(mutScope);
+  const newAddItemMutation = useAddItemToList(mutScope);
+
+  // NOTE: we set the initial value of `value` to empty string to make the
+  // `Textfeild` a controlled component
+  const [value, setValue] = useState<string>('');
+  const [items, setItems] = useState(listItems);
+
+  // TODO: work out how to get notified if a request failed so we can bubble up
+  // to the user. Right now, tanstack query is handling it for us and silently
+  // sending the request when connection is re-established.
+  const onAddItem = () => {
+    let itemName = value.trim();
+    if (itemName.length <= 0)
+      return;
+    newItemMutation.mutate({
+      body: { name: itemName, quantity: 1 }
+    }, {
+      onError: () => {
+        throw new Error(`Unable to create new item with name: ${itemName}`);
+      },
+      onSuccess: (newItem, _, __, ___) => {
+        newAddItemMutation.mutate({
+          params: {
+            path: {
+              list_id: list.id,
+            },
+            query: {
+              item_id: newItem.id,
+            }
+          }
+        }, {
+          onError: () => {
+            throw new Error(`Unable to add item ${newItem.id} to list ${list.id}.`);
+          },
+          onSuccess: () => {
+            setItems(() => [...items, newItem]);
+            setValue('');
+          }
+        });
+      }
+    });
+  };
 
   return (
-    <>
-      <h1>{list.name}</h1>
-      <AddItemInput allItems={allItems}/>
+    <Stack spacing={2}>
+      <Stack direction={'row'} spacing={2} style={{alignItems: 'center'}}>
+        <Link to={'/'} style={{
+          width: '50px',
+          height: '50px',
+          borderRadius: '5px',
+          border: 'solid lightblue 2px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div>
+            <ArrowBackIcon />
+          </div>
+        </Link>
+        <h1 style={{ textDecoration: (list.active ? '' : 'line-through') }}>{list.name}</h1>
+      </Stack>
+      <Stack direction={'row'}>
+        <TextField
+          disabled={!list.active}
+          variant="outlined"
+          label="Add a new or existing item"
+
+          // See: <https://stackoverflow.com/a/67578169>
+          // I don't love this solution, but it's temporary, take from that what
+          // you will :).
+          onKeyDown={(event) => {
+            if (event.key == 'Enter') {
+              onAddItem();
+            }
+            event.defaultPrevented
+          }}
+
+          // Because this is a controlled component we are required to specify
+          // the on change function
+          onChange={(event) => setValue(event.target.value)}
+          value={value}
+        />
+        <Button disabled={!list.active} style={{marginLeft: "10px"}} onClick={onAddItem} variant="outlined">
+          Add item
+        </Button>
+      </Stack>
       <ol>{
-        listItems.map(i =>
+        items.map(i =>
           <li key={i.id}>{i.name}</li>
         )
       }</ol>
-    </>
+    </Stack>
   )
 }
 
 function ShoppingList({ list }: { list: ShopListDTO }) {
   return (
     <Link className="list-item" to="/list/$listId" params={{ listId: `${list.id}` }}>
-          <h2>{list.name}</h2>
+      <h2 style={{ textDecoration: (list.active ? '' : 'line-through') }}>{list.name}</h2>
           <ul className="inline-list">
             <li><CreatedAt strDate={list.created_at} /></li>
           </ul>

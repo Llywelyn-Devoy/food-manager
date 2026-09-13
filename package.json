@@ -10,8 +10,5 @@
     "lint": "npm run -w frontend link",
     "preview": "npm run -w frontend preview",
     "gen-openapi-types": "npm run -w frontend gen-openapi-types"
-  },
-  "dependencies": {
-    "@tanstack/react-router": "^1.170.33"
   }
 }
