@@ -1,8 +1,8 @@
 // import { useState } from "react";
 // import { useEffect, useState } from "react";
 import { formatDateNicely, parseDate } from "./date_utils";
-import { fetchAllItems, fetchItems, fetchList, fetchLists, useAddItemToList, usePostNewItem } from "./api";
-import type { ShopListDTO } from "./api";
+import { fetchAllItems, fetchItems, fetchList, fetchLists, useAddItemToList, usePostNewItem, useRemoveItemFromList } from "./api";
+import type { ShopItemDTO, ShopListDTO } from "./api";
 import Loading from './Loading';
 // import { Suspense } from 'react';
 import {
@@ -13,9 +13,10 @@ import {
   Outlet,
   RouterProvider
 } from '@tanstack/react-router';
-import { Alert, Button, Stack, TextField } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Button, Stack, TextField } from "@mui/material";
 // import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useId, useState } from "react";
 
 
@@ -35,7 +36,7 @@ const indexRoute = createRoute({
   path: '/',
   loader: () => fetchLists(),
   errorComponent: () => <Alert severity="error">Failed to load shop lists.</Alert>,
-  pendingComponent: Loading,
+  pendingComponent: () => <Loading size={'big'} />,
   component: () => {
     return (
       <>
@@ -59,7 +60,7 @@ const listRoute = createRoute({
       allItems: await fetchAllItems(),
     }
   },
-  pendingComponent: Loading,
+  pendingComponent: () => <Loading size={'big'} />,
   component: ShoppingItems,
 })
 
@@ -71,13 +72,39 @@ function CreatedAt({ strDate }: {strDate: string}) {
   )
 }
 
+function RemovableListItem({ item, disabled = false, deleteItemCallback }: { item: ShopItemDTO, disabled?: boolean, deleteItemCallback: (item: ShopItemDTO) => void }) {
+  return (
+    <li key={item.id} style={{
+      border: 'var(--border)',
+      borderRadius: 'var(--radius)',
+      marginBottom: '5px',
+      paddingLeft: '10px',
+      maxWidth: '80ch',
+      filter: disabled ?  'grayscale(80%)' : ''
+    }}>
+      <Stack direction={'row'} style={{
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        {item.name}
+        <Button disabled={disabled} onClick={() => deleteItemCallback(item)}>
+          <DeleteIcon style={{color: 'red'}} />
+        </Button>
+      </Stack>
+    </li>
+  );
+}
+
 function ShoppingItems() {
   const data  = listRoute.useLoaderData();
-  const { list, listItems /* , allItems */ } = data;
+  const { list, listItems } = data;
 
   const mutScope = useId();
   const newItemMutation = usePostNewItem(mutScope);
-  const newAddItemMutation = useAddItemToList(mutScope);
+  const addItemMutation = useAddItemToList(mutScope);
+  const removeItemMutation = useRemoveItemFromList();
+  const isAdding = newItemMutation.isPending || addItemMutation.isPending;
+  const isPendingOperation = isAdding || removeItemMutation.isPending;
 
   // NOTE: we set the initial value of `value` to empty string to make the
   // `Textfeild` a controlled component
@@ -98,7 +125,7 @@ function ShoppingItems() {
         throw new Error(`Unable to create new item with name: ${itemName}`);
       },
       onSuccess: (newItem, _, __, ___) => {
-        newAddItemMutation.mutate({
+        addItemMutation.mutate({
           params: {
             path: {
               list_id: list.id,
@@ -126,15 +153,13 @@ function ShoppingItems() {
         <Link to={'/'} style={{
           width: '50px',
           height: '50px',
-          borderRadius: '5px',
-          border: 'solid lightblue 2px',
+          borderRadius: 'var(--radius)',
+          border: 'var(--border)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <div>
-            <ArrowBackIcon />
-          </div>
+          <ArrowBackIcon />
         </Link>
         <h1 style={{ textDecoration: (list.active ? '' : 'line-through') }}>{list.name}</h1>
       </Stack>
@@ -159,13 +184,30 @@ function ShoppingItems() {
           onChange={(event) => setValue(event.target.value)}
           value={value}
         />
-        <Button disabled={!list.active} style={{marginLeft: "10px"}} onClick={onAddItem} variant="outlined">
-          Add item
+        <Button disabled={!list.active || isPendingOperation} style={{marginLeft: "10px", paddingTop: "0px", paddingBottom: "0px"}} onClick={onAddItem} variant="outlined">
+          {isAdding ? <Loading/> : <p>Add item</p>}
         </Button>
       </Stack>
       <ol>{
         items.map(i =>
-          <li key={i.id}>{i.name}</li>
+          <RemovableListItem item={i} disabled={!list.active || isPendingOperation} deleteItemCallback={(item) => {
+            removeItemMutation.mutate({
+              params: {
+                path: {
+                  list_id: list.id
+                },
+                query: {
+                  item_id: item.id,
+                }
+              }
+            }, {
+              // TODO: better error handling
+              onError: () => { console.log("Failed to remove item") },
+              onSuccess: () => {
+                setItems(items.filter(i => i.id !== item.id))
+              }
+            });
+          } } />
         )
       }</ol>
     </Stack>
@@ -199,12 +241,14 @@ function ShoppingLists() {
       <ul className="list">
         { renderList(active) }
       </ul>
-      <details>
-        <summary>Old lists:</summary>
-        <ul className="list">
-          { renderList(inactive) }
-        </ul>
-      </details>
+      <Accordion>
+        <AccordionSummary>Old lists:</AccordionSummary>
+        <AccordionDetails>
+          <ul className="list">
+            { renderList(inactive) }
+          </ul>
+        </AccordionDetails>
+      </Accordion>
     </>
   )
 }

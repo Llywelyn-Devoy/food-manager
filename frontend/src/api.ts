@@ -99,3 +99,7 @@ export function useAddItemToList(scope: string) {
     }
   });
 }
+
+export function useRemoveItemFromList() {
+  return $apiq.useMutation("put", "/lists/{list_id}/remove-item");
+}

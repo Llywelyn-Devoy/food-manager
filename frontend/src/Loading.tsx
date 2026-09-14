@@ -23,8 +23,12 @@ function SideToSider() {
   )
 }
 
-function Loading() {
-  return <SideToSider />;
+function Loading({ size = 'small' }: {size?: 'small' | 'big'}) {
+  return (
+    <div style={{fontSize: size === 'small' ? '14px' : '20px'}}>
+      <SideToSider />
+    </div>
+  )
 }
 
 export default Loading

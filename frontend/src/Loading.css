@@ -1,8 +1,9 @@
 .flipped { transform: scaleX(-1); }
 
 .common {
-    padding: 25px;
-    font-size: 20px;
+    /*padding: 25px;*/
+    /*font-size: 20px;*/
+    /*font-size: 14px;*/
     text-align: center;
 }
 

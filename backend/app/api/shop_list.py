@@ -70,6 +70,16 @@ async def add_item(
     await repo.add_item(list_id, item_id)
 
 
+# NOTE: make this a put since subsequent puts are a no-op
+@router.put("/{list_id}/remove-item", responses={**RespNotFound})
+async def remove_item(
+    repo: ShopListRepoDep,
+    list_id: int,
+    item_id: int,
+):
+    await repo.remove_item(list_id, item_id)
+
+
 @router.get("/{list_id}/items", responses={**RespNotFound})
 async def get_items(
     repo: ShopListRepoDep,

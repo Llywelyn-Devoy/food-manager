@@ -36,15 +36,33 @@ class ShopListRepo:
         # NOTE: we use `get_one` instead of `get` since, `get_one` throws on not
         # found rather than returning `None`
         try:
-            list: ShopList | None = await self._db.get_one(ShopList, list_id)
-            item: ShopItem | None = await self._db.get_one(ShopItem, item_id)
+            list: ShopList = await self._db.get_one(ShopList, list_id)
+            item: ShopItem = await self._db.get_one(ShopItem, item_id)
 
+            # async doesn't play nice with lazy loading of attributes
             items = await list.awaitable_attrs.items
             if item in items:
                 return
-
-            # async doesn't play nice with lazy loading of attributes
             items.append(item)
+            await self._db.commit()
+        except sqlalchemy_exceptions.NoResultFound as e:
+            raise ObjectNotFound from e
+
+    async def remove_item(self, list_id: int, item_id: int):
+        """
+        Removes the `item_id` from the `list_id`, if either `list_id` or
+        `item_id` is not found an `ObjectNotFound` error is raised.
+        `ObjectNotFound` is also raised if the `item_id` isn't a member of the
+        `list_id`.
+        """
+        try:
+            list: ShopList = await self._db.get_one(ShopList, list_id)
+            item: ShopItem = await self._db.get_one(ShopItem, item_id)
+
+            items = await list.awaitable_attrs.items
+            if item not in items:
+                raise ObjectNotFound()
+            items.remove(item)
             await self._db.commit()
         except sqlalchemy_exceptions.NoResultFound as e:
             raise ObjectNotFound from e

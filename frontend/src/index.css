@@ -1,5 +1,5 @@
 :root {
-  --border: #0bF;
+  --border: solid #0bF 2px;
   --radius: 2px;
 }
 
@@ -28,7 +28,7 @@
     margin-top: 5px;
     padding: 10px;
 
-    border: solid var(--border) 1px;
+    border: var(--border);
     border-radius: var(--radius);
 
     text-align: left;
